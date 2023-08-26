@@ -1,5 +1,5 @@
-#include "main.h"
-
+#include <stdarg.h>
+#include <stdio.h>
 void print_buffer(char buffer[], int *buff_ind);
 
 /**
@@ -9,59 +9,65 @@ void print_buffer(char buffer[], int *buff_ind);
  */
 int _printf(const char *format, ...)
 {
-	int i, printed = 0, printed_chars = 0;
-	int flags, width, precision, size, buff_ind = 0;
-	va_list list;
-	char buffer[BUFF_SIZE];
+    va_list args;
+    va_start(args, format);
 
-	if (format == NULL)
-		return (-1);
+    int count = 0;
+    char c;
 
-	va_start(list, format);
+    while (*format != '\0')
+    {
+        if (*format == '%')
+        {
+            format++;
 
-	for (i = 0; format && format[i] != '\0'; i++)
-	{
-		if (format[i] != '%')
-		{
-			buffer[buff_ind++] = format[i];
-			if (buff_ind == BUFF_SIZE)
-				print_buffer(buffer, &buff_ind);
-			/* write(1, &format[i], 1);*/
-			printed_chars++;
-		}
-		else
-		{
-			print_buffer(buffer, &buff_ind);
-			flags = get_flags(format, &i);
-			width = get_width(format, &i, list);
-			precision = get_precision(format, &i, list);
-			size = get_size(format, &i);
-			++i;
-			printed = handle_print(format, &i, list, buffer,
-				flags, width, precision, size);
-			if (printed == -1)
-				return (-1);
-			printed_chars += printed;
-		}
-	}
+            switch (*format)
+            {
+                case 'c':
+                    c = (char)va_arg(args, int);
+                    putchar(c);
+                    count++;
+                    break;
+                case 's':
+                    {
+                        char *str = va_arg(args, char *);
+                        while (*str != '\0')
+                        {
+                            putchar(*str);
+                            count++;
+                            str++;
+                        }
+                    }
+                    break;
+                case '%':
+                    putchar('%');
+                    count++;
+                    break;
+                default:
+                    putchar('%');
+                    putchar(*format);
+                    count += 2;
+                    break;
+            }
+        }
+        else
+        {
+            putchar(*format);
+            count++;
+        }
 
-	print_buffer(buffer, &buff_ind);
+        format++;
+    }
 
-	va_end(list);
-
-	return (printed_chars);
+    va_end(args);
+    return count;
 }
 
-/**
- * print_buffer - Prints the contents of the buffer if it exist
- * @buffer: Array of chars
- * @buff_ind: Index at which to add next char, represents the length.
- */
-void print_buffer(char buffer[], int *buff_ind)
+int main(void)
 {
-	if (*buff_ind > 0)
-		write(1, &buffer[0], *buff_ind);
+    int len = _printf("Hello, %s! I am a %c%% character.\n", "world", 'F');
+    printf("Length: %d\n", len);
 
-	*buff_ind = 0;
+    return 0;
 }
 
